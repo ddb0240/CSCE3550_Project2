@@ -10,7 +10,7 @@ import sqlite3
 
 hostName = "127.0.0.1"
 serverPort = 8080
-
+# Database definition
 def create_db():
     conn = sqlite3.connect('totally_not_my_privateKeys.db')
     c = conn.cursor()
@@ -21,7 +21,7 @@ def create_db():
     conn.commit()
     conn.close()
 
-
+# Add private key function
 def add_key_to_db(key_data, exp):
     conn = sqlite3.connect('totally_not_my_privateKeys.db')
     c = conn.cursor()
@@ -30,7 +30,7 @@ def add_key_to_db(key_data, exp):
     conn.commit()
     conn.close()
 
-
+# Return private key function
 def get_private_key_from_db(kid):
     conn = sqlite3.connect('totally_not_my_privateKeys.db')
     c = conn.cursor()
@@ -40,7 +40,7 @@ def get_private_key_from_db(kid):
     if row:
         return row[0]
     return None
-
+# Converts key into a PEM
 def serialize_private_key(private_key):
     pem = private_key.private_bytes(
         encoding=serialization.Encoding.PEM,
@@ -48,7 +48,7 @@ def serialize_private_key(private_key):
         encryption_algorithm=serialization.NoEncryption()
     )
     return pem.decode('utf-8')
-
+# Converts an integer value into a Base64 encoded string
 def int_to_base64(value):
     value_hex = format(value, 'x')
     if len(value_hex) % 2 == 1:
@@ -59,7 +59,7 @@ def int_to_base64(value):
 
 
 class MyServer(BaseHTTPRequestHandler):
-
+    # HTTP requests
     def do_PUT(self):
         self.send_response(405)
         self.end_headers()
@@ -79,7 +79,7 @@ class MyServer(BaseHTTPRequestHandler):
         self.send_response(405)
         self.end_headers()
         return
-
+    # /auth endpoint for private key
     def do_POST(self):
         parsed_path = urlparse(self.path)
         params = parse_qs(parsed_path.query)
@@ -112,7 +112,7 @@ class MyServer(BaseHTTPRequestHandler):
         self.send_response(405)
         self.end_headers()
         return
-
+    # /.well-known/jwks.json endpoint for displaying keys
     def do_GET(self):
         if self.path == "/.well-known/jwks.json":
             self.send_response(200)
@@ -143,7 +143,9 @@ class MyServer(BaseHTTPRequestHandler):
         return
 
 if __name__ == "__main__":
+    # Create database
     create_db()
+    # Create valid and expired keys
     private_key = rsa.generate_private_key(
         public_exponent=65537,
         key_size=2048,
